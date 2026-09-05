@@ -1,0 +1,9 @@
+# Production-ready Docker Compose Infrastructure Placeholder
+version: '3.8'
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/api.Dockerfile
+    ports:
+      - "3000:3000"

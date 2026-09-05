@@ -1,0 +1,1 @@
+export const COMMON_DECORATOR_PLACEHOLDER = true;

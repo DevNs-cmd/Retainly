@@ -1,0 +1,1 @@
+export const COMMON_INTERCEPTOR_PLACEHOLDER = true;

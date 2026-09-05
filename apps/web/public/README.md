@@ -1,0 +1,1 @@
+# Static Public Assets Directory
