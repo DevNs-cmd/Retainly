@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.venv/
+venv/
+env/
+
+# Env
+.env
+*.env
+retainly.db
+
+# ML artifacts
+trained_models/*.pkl
+trained_models/*.joblib
+
+# Data (keep raw/processed dirs, not data files)
+datasets/raw/*.csv
+datasets/raw/*.parquet
+datasets/processed/*.csv
+datasets/processed/*.parquet
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
