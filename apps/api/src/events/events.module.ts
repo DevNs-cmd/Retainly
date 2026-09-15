@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
 import { EventPublisher } from './event-publisher';
-@Module({ providers: [EventPublisher], exports: [EventPublisher] })
+import { OutboxModule } from '../outbox/outbox.module';
+@Module({ imports: [OutboxModule], providers: [EventPublisher], exports: [EventPublisher] })
 export class EventsModule {}

@@ -1,0 +1,9 @@
+import { Injectable,NotFoundException } from '@nestjs/common';import { InjectQueue } from '@nestjs/bullmq';import { Queue } from 'bullmq';import { randomUUID } from 'node:crypto';import { QueueNames } from '../../queues/queue-names';import { TenantContext } from '../../tenant/tenant.context';import { DatabaseService } from '../../data/database.service';import { TenantCache } from '../../common/cache/tenant-cache.service';import { ResourceQueryDto } from '../../common/dto/resource-query.dto';import { RiskScoreRepository } from '../repositories/risk-score.repository';import { withTimeout } from '../../common/utils/with-timeout';
+@Injectable()export class RiskService{
+ constructor(private readonly repository:RiskScoreRepository,private readonly db:DatabaseService,private readonly tenant:TenantContext,private readonly cache:TenantCache,@InjectQueue(QueueNames.RISK)private readonly queue:Queue){}
+ list(q:ResourceQueryDto){return this.repository.list(q);}
+ async latest(studentId:string){await this.db.require('student',this.tenant.organizationId,studentId);return this.cache.remember(this.tenant.organizationId,'risk',{studentId},300,async()=>{const rows=await this.repository.history(studentId,Object.assign(new ResourceQueryDto(),{limit:1}));if(!rows[0])throw new NotFoundException('Risk snapshot not available');return rows[0];});}
+ async history(studentId:string,q:ResourceQueryDto){await this.db.require('student',this.tenant.organizationId,studentId);return this.repository.history(studentId,q);}
+ async recalculate(studentId:string){await this.db.require('student',this.tenant.organizationId,studentId);const eventId=randomUUID();await withTimeout(this.queue.add('risk.recalculate',{organizationId:this.tenant.organizationId,eventId,payload:{studentId}},{jobId:eventId}));return {queued:true,jobId:eventId};}
+}
+
