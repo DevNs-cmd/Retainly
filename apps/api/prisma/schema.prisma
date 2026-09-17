@@ -7,6 +7,150 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  OWNER
+  ADMIN
+  COACH
+  VIEWER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CoursePlatform {
+  KAJABI
+  TEACHABLE
+  THINKIFIC
+  PODIA
+  CIRCLE
+  CUSTOM
+}
+
+enum IntegrationProvider {
+  KAJABI
+  TEACHABLE
+  THINKIFIC
+  PODIA
+  CIRCLE
+  STRIPE
+  PAYPAL
+  MAILCHIMP
+  CONVERTKIT
+  ACTIVECAMPAIGN
+  KLAVIYO
+  CALENDLY
+  SLACK
+  CUSTOM
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  DISCONNECTED
+}
+
+enum SubscriptionPlan {
+  STARTER
+  GROWTH
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum ActivityEventType {
+  LOGIN
+  LESSON_STARTED
+  LESSON_COMPLETED
+  COURSE_STARTED
+  COURSE_COMPLETED
+  VIDEO_WATCHED
+  ASSIGNMENT_SUBMITTED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  EMAIL_OPENED
+  EMAIL_CLICKED
+  INACTIVE
+  CUSTOM
+}
+
+enum RetentionActionType {
+  EMAIL
+  SMS
+  COACH_TASK
+  DISCOUNT
+  WEBHOOK
+  CUSTOM
+}
+
+enum RetentionCampaignType {
+  EMAIL
+  DISCOUNT
+  CHECK_IN
+  COACH_TASK
+  CUSTOM
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ActionStatus {
+  PENDING
+  SCHEDULED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELED
+}
+
+enum AutomationStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+enum AutomationTriggerType {
+  RISK_SCORE_CHANGED
+  ACTIVITY_DETECTED
+  INACTIVITY_DETECTED
+  COURSE_MILESTONE
+  SCHEDULE
+  MANUAL
+}
+
+enum NotificationType {
+  SYSTEM
+  CAMPAIGN
+  ALERT
+  REMINDER
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
 enum OutboxStatus {
   PENDING
   PROCESSING
@@ -14,28 +158,463 @@ enum OutboxStatus {
   FAILED
 }
 
-model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+// ============================================================================
+// CORE MODELS
+// ============================================================================
 
+model Organization {
+  id                String   @id @default(uuid())
+  name              String
+  slug              String   @unique
+  logoUrl           String?  @map("logo_url")
+  website           String?
+  timezone          String   @default("UTC")
+  settings          Json     @default("{}")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users             UserMembership[]
+  courses           Course[]
+  students          Student[]
+  enrollments       CourseEnrollment[]
+  activityEvents    ActivityEvent[]
+  riskScores        RiskScore[]
+  campaigns         RetentionCampaign[]
+  messageActions    MessageAction[]
+  automationRules   AutomationRule[]
+  integrations      IntegrationConnection[]
+  subscriptions     Subscription[]
+  usageTracking     UsageTracking[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  retentionOutcomes RetentionOutcome[]
+
+  @@index([slug])
   @@map("organizations")
 }
 
-model StudentActivity {
+model User {
+  id                String           @id @default(uuid())
+  email             String           @unique
+  firstName         String?          @map("first_name")
+  lastName          String?          @map("last_name")
+  avatarUrl         String?          @map("avatar_url")
+  emailVerified     Boolean          @default(false) @map("email_verified")
+  lastLoginAt       DateTime?        @map("last_login_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  memberships       UserMembership[]
+  createdRules      AutomationRule[] @relation("CreatedBy")
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserMembership {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  organizationId String   @map("organization_id")
+  role           UserRole
+  invitedAt      DateTime @default(now()) @map("invited_at")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+  @@index([userId])
+  @@map("user_memberships")
+}
+
+model Course {
+  id             String         @id @default(uuid())
+  organizationId String         @map("organization_id")
+  externalId     String?        @map("external_id")
+  name           String
+  description    String?        @db.Text
+  platform       CoursePlatform
+  thumbnailUrl   String?        @map("thumbnail_url")
+  isActive       Boolean        @default(true) @map("is_active")
+  metadata       Json           @default("{}")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enrollments   CourseEnrollment[]
+  activityEvents ActivityEvent[]
+  riskScores    RiskScore[]
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId, isActive])
+  @@index([platform])
+  @@map("courses")
+}
+
+model Student {
   id             String   @id @default(uuid())
   organizationId String   @map("organization_id")
-  studentId      String   @map("student_id")
-  activityType   String   @map("activity_type")
-  source         String
-  payload        Json
-  occurredAt     DateTime @map("occurred_at")
+  externalId     String?  @map("external_id")
+  email          String
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  avatarUrl      String?  @map("avatar_url")
+  phone          String?
+  timezone       String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enrollments       CourseEnrollment[]
+  activityEvents    ActivityEvent[]
+  riskScores        RiskScore[]
+  messageActions    MessageAction[]
+  retentionOutcomes RetentionOutcome[]
+
+  @@unique([organizationId, email])
+  @@unique([organizationId, externalId])
+  @@index([organizationId])
+  @@index([email])
+  @@map("students")
+}
+
+model CourseEnrollment {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  studentId      String    @map("student_id")
+  courseId       String    @map("course_id")
+  enrolledAt     DateTime  @default(now()) @map("enrolled_at")
+  completedAt    DateTime? @map("completed_at")
+  progress       Float     @default(0) // 0-100
+  lastActivityAt DateTime? @map("last_activity_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([organizationId, isActive])
+  @@index([courseId])
+  @@index([studentId])
+  @@index([lastActivityAt])
+  @@map("course_enrollments")
+}
+
+// ============================================================================
+// ACTIVITY & RISK MODELS
+// ============================================================================
+
+model ActivityEvent {
+  id             String            @id @default(uuid())
+  organizationId String            @map("organization_id")
+  studentId      String            @map("student_id")
+  courseId       String?           @map("course_id")
+  eventType      ActivityEventType @map("event_type")
+  eventName      String            @map("event_name")
+  metadata       Json              @default("{}")
+  occurredAt     DateTime          @map("occurred_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, studentId, occurredAt])
+  @@index([organizationId, courseId, occurredAt])
+  @@index([eventType, occurredAt])
+  @@index([occurredAt])
+  @@map("activity_events")
+}
+
+model RiskScore {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  studentId      String    @map("student_id")
+  courseId       String?   @map("course_id")
+  score          Float // 0-100
+  riskLevel      RiskLevel @map("risk_level")
+  reasons        Json      @default("[]") // AI-generated reasons
+  confidence     Float // 0-1
+  modelVersion   String    @map("model_version")
+  calculatedAt   DateTime  @map("calculated_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, studentId, calculatedAt])
+  @@index([organizationId, riskLevel, calculatedAt])
+  @@index([organizationId, courseId, riskLevel])
+  @@index([score])
+  @@index([calculatedAt])
+  @@map("risk_scores")
+}
+
+// ============================================================================
+// RETENTION & CAMPAIGNS
+// ============================================================================
+
+model RetentionCampaign {
+  id             String                 @id @default(uuid())
+  organizationId String                 @map("organization_id")
+  name           String
+  description    String?                @db.Text
+  campaignType   RetentionCampaignType  @map("campaign_type")
+  status         CampaignStatus
+  targetRiskLevel RiskLevel?            @map("target_risk_level")
+  targetConditions Json                 @default("{}") @map("target_conditions")
+  content        Json                   @default("{}")
+  scheduledAt    DateTime?              @map("scheduled_at")
+  startedAt      DateTime?              @map("started_at")
+  completedAt    DateTime?              @map("completed_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+
+  // Relations
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messageActions    MessageAction[]
+  retentionOutcomes RetentionOutcome[]
+
+  @@index([organizationId, status])
+  @@index([status, scheduledAt])
+  @@map("retention_campaigns")
+}
+
+model MessageAction {
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  campaignId     String?             @map("campaign_id")
+  studentId      String              @map("student_id")
+  actionType     RetentionActionType @map("action_type")
+  status         ActionStatus
+  content        Json                @default("{}")
+  scheduledAt    DateTime?           @map("scheduled_at")
+  sentAt         DateTime?           @map("sent_at")
+  deliveredAt    DateTime?           @map("delivered_at")
+  failedAt       DateTime?           @map("failed_at")
+  errorMessage   String?             @db.Text @map("error_message")
+  metadata       Json                @default("{}")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign          RetentionCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  student           Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  retentionOutcomes RetentionOutcome[]
+
+  @@index([organizationId, status])
+  @@index([campaignId, status])
+  @@index([studentId, status])
+  @@index([status, scheduledAt])
+  @@map("message_actions")
+}
+
+// ============================================================================
+// AUTOMATION
+// ============================================================================
+
+model AutomationRule {
+  id             String                  @id @default(uuid())
+  organizationId String                  @map("organization_id")
+  name           String
+  description    String?                 @db.Text
+  triggerType    AutomationTriggerType   @map("trigger_type")
+  conditions     Json                    @default("{}") // Complex condition logic
+  actions        Json                    @default("[]") // Array of actions to execute
+  status         AutomationStatus
+  priority       Int                     @default(0)
+  createdBy      String                  @map("created_by")
+  lastTriggeredAt DateTime?              @map("last_triggered_at")
+  triggerCount   Int                     @default(0) @map("trigger_count")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator      User         @relation("CreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status])
+  @@index([status, triggerType])
+  @@map("automation_rules")
+}
+
+// ============================================================================
+// INTEGRATIONS
+// ============================================================================
+
+model IntegrationConnection {
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  provider       IntegrationProvider
+  name           String
+  status         IntegrationStatus
+  config         Json                @default("{}") // Encrypted/referenced credentials
+  lastSyncedAt   DateTime?           @map("last_synced_at")
+  lastError      String?             @db.Text @map("last_error")
+  syncFrequency  Int?                @map("sync_frequency") // minutes
+  metadata       Json                @default("{}")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider, name])
+  @@index([organizationId, status])
+  @@index([provider, status])
+  @@map("integration_connections")
+}
+
+// ============================================================================
+// BILLING & USAGE
+// ============================================================================
+
+model Subscription {
+  id                String             @id @default(uuid())
+  organizationId    String             @unique @map("organization_id")
+  plan              SubscriptionPlan
+  status            SubscriptionStatus
+  stripeCustomerId  String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?         @map("stripe_subscription_id")
+  currentPeriodStart DateTime          @map("current_period_start")
+  currentPeriodEnd   DateTime          @map("current_period_end")
+  cancelAtPeriodEnd Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt        DateTime?          @map("canceled_at")
+  trialEndsAt       DateTime?          @map("trial_ends_at")
+  metadata          Json               @default("{}")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@map("subscriptions")
+}
+
+model UsageTracking {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  metricName       String   @map("metric_name")
+  metricValue      Int      @map("metric_value")
+  periodStart      DateTime @map("period_start")
+  periodEnd        DateTime @map("period_end")
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, metricName, periodStart])
+  @@index([organizationId, periodStart])
+  @@map("usage_tracking")
+}
+
+// ============================================================================
+// AUDIT & NOTIFICATIONS
+// ============================================================================
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  userId         String?  @map("user_id")
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  changes        Json     @default("{}")
+  metadata       Json     @default("{}")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @db.Text @map("user_agent")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  @@index([organizationId, studentId])
-  @@map("student_activities")
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }
+
+model Notification {
+  id             String             @id @default(uuid())
+  organizationId String             @map("organization_id")
+  userId         String             @map("user_id")
+  type           NotificationType
+  status         NotificationStatus
+  title          String
+  message        String             @db.Text
+  actionUrl      String?            @map("action_url")
+  metadata       Json               @default("{}")
+  readAt         DateTime?          @map("read_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@index([organizationId, type, createdAt])
+  @@map("notifications")
+}
+
+// ============================================================================
+// RETENTION OUTCOMES (ML Feedback Loop)
+// ============================================================================
+
+model RetentionOutcome {
+  id               String    @id @default(uuid())
+  organizationId   String    @map("organization_id")
+  studentId        String    @map("student_id")
+  campaignId       String?   @map("campaign_id")
+  actionId         String?   @map("action_id")
+  riskScoreBefore  Float?    @map("risk_score_before")
+  riskScoreAfter   Float?    @map("risk_score_after")
+  revenueBefore    Float?    @map("revenue_before")
+  revenueAfter     Float?    @map("revenue_after")
+  retained         Boolean?
+  churned          Boolean?
+  metadata         Json      @default("{}")
+  measuredAt       DateTime  @map("measured_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  campaign     RetentionCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  action       MessageAction?     @relation(fields: [actionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, measuredAt])
+  @@index([studentId, measuredAt])
+  @@index([campaignId])
+  @@map("retention_outcomes")
+}
+
+// ============================================================================
+// EVENT OUTBOX (for event-driven architecture)
+// ============================================================================
 
 model OutboxEvent {
   id             String       @id @default(uuid())
@@ -44,10 +623,11 @@ model OutboxEvent {
   payload        Json
   status         OutboxStatus @default(PENDING)
   retryCount     Int          @default(0) @map("retry_count")
-  error          String?
+  error          String?      @db.Text
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
+  @@index([organizationId, eventType])
   @@map("outbox_events")
 }
