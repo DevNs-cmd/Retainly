@@ -1,0 +1,14 @@
+.git
+.env
+.venv
+venv
+__pycache__
+.pytest_cache
+*.py[cod]
+*.pkl
+*.joblib
+!trained_models/*.pkl
+!trained_models/*.joblib
+datasets/raw/*
+datasets/processed/*
+notebooks

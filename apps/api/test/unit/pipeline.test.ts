@@ -44,7 +44,7 @@ test('outbox partial fanout retries stable job IDs and publishes only after ever
     assert.equal(options.jobId, 'event-a'); calls.push(name);
     if (name === QueueNames.ANALYTICS && failAnalytics) throw new Error('Redis unavailable');
   } }) as unknown as Queue;
-  const publisher = new OutboxPublisher(repo, makeQueue(QueueNames.RISK), makeQueue(QueueNames.ANALYTICS), makeQueue(QueueNames.AUTOMATION), makeQueue(QueueNames.NOTIFICATION));
+  const publisher = new OutboxPublisher(repo, makeQueue(QueueNames.RISK), makeQueue(QueueNames.ANALYTICS), makeQueue(QueueNames.AUTOMATION), makeQueue(QueueNames.NOTIFICATION), makeQueue(QueueNames.BILLING));
   await publisher.publishPendingEvents();
   assert.deepEqual(calls, [QueueNames.RISK, QueueNames.ANALYTICS, 'failed']);
   calls.length = 0; failAnalytics = false;
