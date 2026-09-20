@@ -10,14 +10,29 @@ interface UpcomingTasksProps {
 
 export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs font-sans flex flex-col justify-between h-full">
+    <div
+      className="p-6 rounded-2xl border shadow-xs font-sans flex flex-col justify-between h-full transition-colors"
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        borderColor: 'var(--border-card)',
+      }}
+    >
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <CheckSquare className="w-4 h-4 text-indigo-600" />
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">Upcoming Tasks</h3>
+            <CheckSquare className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+            <h3 className="text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Upcoming Tasks
+            </h3>
           </div>
-          <span className="text-xs font-bold text-indigo-600 px-2 py-0.5 rounded-full bg-indigo-50">
+          <span
+            className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+            style={{
+              backgroundColor: 'var(--accent-subtle)',
+              color: 'var(--accent-subtle-text)',
+              border: '1px solid var(--accent-subtle-border)',
+            }}
+          >
             {tasks.length} Pending
           </span>
         </div>
@@ -26,32 +41,41 @@ export function UpcomingTasks({ tasks }: UpcomingTasksProps) {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="p-3 bg-slate-50/70 border border-slate-100 rounded-xl hover:border-slate-200 transition-all"
+              className="p-3 border rounded-xl hover:opacity-95 transition-all"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                borderColor: 'var(--border-card)',
+              }}
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h4 className="text-xs font-bold text-slate-900 leading-snug">{task.title}</h4>
+                <h4 className="text-xs font-bold leading-snug" style={{ color: 'var(--text-primary)' }}>
+                  {task.title}
+                </h4>
                 <span
                   className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
                     task.priority === 'High'
-                      ? 'bg-rose-100 text-rose-700'
-                      : 'bg-amber-100 text-amber-700'
+                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30'
+                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30'
                   }`}
                 >
                   {task.priority}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
                 <div className="flex items-center gap-1.5">
                   <img
                     src={task.studentAvatar}
                     alt={task.studentName}
-                    className="w-4 h-4 rounded-full object-cover"
+                    className="w-4 h-4 rounded-full object-cover border"
+                    style={{ borderColor: 'var(--border-card)' }}
                   />
-                  <span className="font-medium text-slate-700">{task.studentName}</span>
+                  <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    {task.studentName}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 text-slate-400">
-                  <Clock className="w-3 h-3" />
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                   <span>{task.dueTime}</span>
                 </div>
               </div>
