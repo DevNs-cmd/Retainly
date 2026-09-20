@@ -1,0 +1,3 @@
+import { Controller,Get,Param,Query } from '@nestjs/common';import { ApiTags,ApiBearerAuth,ApiOperation,ApiResponse } from '@nestjs/swagger';import { PaymentsService } from './payments.service';import { ResourceQueryDto } from '../common/dto/resource-query.dto';
+@ApiTags('payments') @ApiBearerAuth() @Controller('payments')export class PaymentsController{constructor(private readonly service:PaymentsService){}@Get() @ApiOperation({summary:'Payment event log'}) @ApiResponse({status:200})list(@Query()q:ResourceQueryDto){return this.service.list(q);}@Get(':id') @ApiOperation({summary:'Payment event'}) @ApiResponse({status:200})get(@Param('id')id:string){return this.service.get(id);}}
+
