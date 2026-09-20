@@ -1,3 +1,2 @@
-import { Module } from '@nestjs/common';
-@Module({})
-export class UsageModule {}
+import { Module } from '@nestjs/common';import { UsageController } from './usage.controller';@Module({controllers:[UsageController]})export class UsageModule{}
+
