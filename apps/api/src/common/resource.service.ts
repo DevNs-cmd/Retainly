@@ -25,6 +25,10 @@ export class ResourceService<K extends ModelName> {
      if (typeof record[field] === 'string') {
        const related = await this.db.require(model as ModelName, this.repository.organizationId, record[field] as string, tx);
        if ('deletedAt' in related && related.deletedAt) throw new BadRequestException('Related resource is deleted');
+       if (field === 'coachId' || field === 'assignedCoachId') {
+         const member = await this.db.first('membership', this.repository.organizationId, { userId: record[field] as string, deletedAt: null, invitationStatus: 'ACCEPTED', role: { in: ['OWNER','ADMIN','COACH'] as never } }, tx);
+         if (!member) throw new BadRequestException('Coach must be an active organization member');
+       }
      }
    }
  }

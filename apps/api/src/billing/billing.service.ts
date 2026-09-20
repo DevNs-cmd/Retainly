@@ -13,7 +13,7 @@ import { DatabaseService } from '../data/database.service'; import { RedisServic
    return this.redis.incrby(key, delta);
  }
  async usage(org: string) {
-   const [students, courses, emails] = await Promise.all([this.db.count('student',org,{ deletedAt: null }),this.db.count('course',org,{ deletedAt: null }),this.redis.get(this.usageKey(org,'emails'))]);
+   const [students, courses, emails] = await Promise.all([this.db.count('student',org,{ deletedAt: null }),this.db.count('course',org,{ deletedAt: null }),this.db.count('notificationLog',org,{channel:'EMAIL',status:'SENT',createdAt:{gte:new Date(this.period()+'-01T00:00:00Z')}})]);
    return { period: this.period(), students, courses, emails: Number(emails || 0) };
  }
  async subscription(org: string) { const organization = await this.db.require('organization',org,org); return { planTier: organization.planTier, subscription: await this.db.first('billingSubscription',org,{}), usage: await this.usage(org), limits: this.limits(organization.planTier) }; }

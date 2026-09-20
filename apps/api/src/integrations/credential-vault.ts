@@ -1,5 +1,5 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common'; import { ConfigService } from '@nestjs/config'; import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
-export interface Credentials { apiKey?: string; accessToken?: string; refreshToken?: string; webhookSecret?: string; accountId?: string; from?: string; subdomain?: string; }
+export interface Credentials { expiresAt?:number; clientId?:string; clientSecret?:string; apiKey?: string; accessToken?: string; refreshToken?: string; webhookSecret?: string; accountId?: string; from?: string; subdomain?: string; }
 @Injectable() export class CredentialVault {
  constructor(private readonly config: ConfigService) {}
  private key() { const key = Buffer.from(this.config.get<string>('INTEGRATION_ENCRYPTION_KEY') || '', 'base64'); if (key.length !== 32) throw new ServiceUnavailableException('Integration encryption key is not configured'); return key; }

@@ -18,16 +18,17 @@ export class AuthService {
     if (issuerUrl.protocol !== 'https:') throw new Error('AUTH_ISSUER must use HTTPS');
     this.jwks = createRemoteJWKSet(new URL('.well-known/jwks.json', this.issuer.replace(/\/?$/, '/')));
   }
-  async authenticate(token: string): Promise<AuthUser> {
+  async authenticate(token: string, invitation = false): Promise<AuthUser> {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.issuer, audience: this.audience, algorithms: ['RS256'],
         requiredClaims: ['sub', 'exp', 'iat'], clockTolerance: 5,
       });
-      return this.userFromClaims(payload);
+      return this.userFromClaims(payload, invitation);
     } catch { throw new UnauthorizedException('Invalid or expired access token'); }
   }
-  userFromClaims(payload: JWTPayload): AuthUser {
+  userFromClaims(payload: JWTPayload, invitation = false): AuthUser {
+    if(invitation){if(!payload.sub)throw new UnauthorizedException('User required');return {userId:payload.sub,organizationId:'',role:Role.VIEWER,email:typeof payload.email==='string'?payload.email.toLowerCase():undefined,emailVerified:payload.email_verified===true};}
     const orgClaim = this.config.get<string>('AUTH_ORG_CLAIM') || 'org_id';
     const roleClaim = this.config.get<string>('AUTH_ROLE_CLAIM') || 'org_role';
     const organizationId = payload[orgClaim];

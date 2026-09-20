@@ -36,8 +36,10 @@ import { Injectable,BadRequestException } from '@nestjs/common';import { Job } f
      const student=existing?await this.db.update('student',org,existing.id,data,tx):await this.db.create('student',org,data,tx);
      await this.outbox.create({organizationId:org,eventType:'student.synced',payload:{studentId:student.id}},tx);
    }else{
+     if(!row.studentId)throw new BadRequestException('Provider student reference missing');
      const student=await this.db.first('student',org,{provider,externalId:row.studentId},tx);if(!student)throw new BadRequestException('Synchronized student mapping missing');
      if(kind==='enrollments'){
+       if(!row.courseId)throw new BadRequestException('Provider course reference missing');
        const course=await this.db.first('course',org,{provider,externalId:row.courseId},tx);if(!course)throw new BadRequestException('Synchronized course mapping missing');
        const existing=await this.db.first('enrollment',org,{studentId:student.id,courseId:course.id},tx);
        const status=Object.values(EnrollmentStatus).includes(row.status as EnrollmentStatus)?row.status as EnrollmentStatus:EnrollmentStatus.ACTIVE;
@@ -45,6 +47,7 @@ import { Injectable,BadRequestException } from '@nestjs/common';import { Job } f
        const enrollment=existing?await this.db.update('enrollment',org,existing.id,data,tx):await this.db.create('enrollment',org,data,tx);
        if(!existing||existing.status!==status)await this.outbox.create({organizationId:org,eventType:'enrollment.status.changed',payload:{studentId:student.id,status,enrollmentId:enrollment.id}},tx);
      }else{
+       if(!Number.isSafeInteger(row.amountMinor)||row.amountMinor!<0||!row.currency||!/^[A-Z]{3}$/.test(row.currency)||!row.occurredAt||!Number.isFinite(Date.parse(row.occurredAt)))throw new BadRequestException('Invalid provider payment');
        const existing=await this.db.first('payment',org,{provider,externalId:row.id},tx);
        const data={studentId:student.id,provider,externalId:row.id,amountMinor:row.amountMinor||0,currency:row.currency||'USD',status:row.status||'SUCCEEDED',occurredAt:new Date(row.occurredAt||Date.now())};
        if(existing)await this.db.update('payment',org,existing.id,data,tx);else{await this.db.create('payment',org,data,tx);await this.outbox.create({organizationId:org,eventType:data.status==='FAILED'?'payment.failed':'payment.recorded',payload:{studentId:student.id}},tx);}

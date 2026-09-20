@@ -9,6 +9,8 @@ import { CreateCampaignDto, UpdateCampaignDto } from './dto/create-campaign.dto'
 @ApiTags('campaigns') @ApiBearerAuth() @Controller('campaigns')
 export class CampaignsController {
  constructor(private readonly service: CampaignsService) {}
+ @Post(':id/pause') @Roles(Role.OWNER,Role.ADMIN) @ApiOperation({summary:'Pause campaign delivery'}) pause(@Param('id')id:string){return this.service.pause(id);}
+ @Post(':id/resume') @Roles(Role.OWNER,Role.ADMIN) @ApiOperation({summary:'Resume paused campaign'}) resume(@Param('id')id:string){return this.service.resume(id);}
  @Get() @ApiOperation({ summary: 'List campaigns' }) @ApiResponse({ status: 200, description: 'Paginated records' })
  list(@Query() query: ResourceQueryDto) { return this.service.list(query); }
  @Post(':id/send') @Roles(Role.OWNER,Role.ADMIN) @ApiOperation({summary:'Send campaign now'}) @ApiResponse({status:201}) send(@Param('id') id:string){return this.service.schedule(id);}

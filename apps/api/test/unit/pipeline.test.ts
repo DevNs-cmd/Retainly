@@ -16,7 +16,7 @@ import { RedisService } from '../../src/redis/redis.module';
 import { ListActivitiesDto } from '../../src/activities/dto/list-activities.dto';
 
 test('activity and outbox use the same transaction and an outbox failure rejects ingestion', async () => {
-  const tx = {} as Prisma.TransactionClient;
+  const tx = { student: { findFirst: async () => ({id:'student'}) } } as unknown as Prisma.TransactionClient;
   const calls: string[] = [];
   const prisma = { $transaction: async (fn: (tx: Prisma.TransactionClient) => Promise<unknown>) => fn(tx) } as unknown as PrismaService;
   const repository = { create: async (org: string, dto: object, actualTx: object) => {

@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';import { IsString,IsEnum,IsNumber,IsBoolean,IsOptional,ValidateNested,IsArray,ArrayMinSize,ArrayMaxSize,Min,Max,MaxLength,MinLength,IsInt } from 'class-validator';import { ApiProperty,ApiPropertyOptional,PartialType } from '@nestjs/swagger';import { TriggerType,ActionType,EnrollmentStatus } from '../../data/entities';
+import { Type } from 'class-transformer';import { IsDefined,IsString,IsEnum,IsNumber,IsBoolean,IsOptional,ValidateNested,IsArray,ArrayMinSize,ArrayMaxSize,Min,Max,MaxLength,MinLength,IsInt } from 'class-validator';import { ApiProperty,ApiPropertyOptional,PartialType } from '@nestjs/swagger';import { TriggerType,ActionType,EnrollmentStatus } from '../../data/entities';
 export class ConditionsDto {
  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Max(1) threshold?:number;
  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(-1) @Max(1) delta?:number;
@@ -7,7 +7,7 @@ export class ConditionsDto {
 }
 export class TriggerDto {
  @ApiProperty({enum:TriggerType}) @IsEnum(TriggerType) type!:TriggerType;
- @ApiProperty({type:ConditionsDto}) @ValidateNested() @Type(()=>ConditionsDto) conditions!:ConditionsDto;
+ @ApiProperty({type:ConditionsDto}) @IsDefined() @ValidateNested() @Type(()=>ConditionsDto) conditions!:ConditionsDto;
 }
 export class ActionConfigDto {
  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) templateId?:string;
@@ -20,11 +20,11 @@ export class ActionConfigDto {
 }
 export class ActionDto {
  @ApiProperty({enum:ActionType}) @IsEnum(ActionType) type!:ActionType;
- @ApiProperty({type:ActionConfigDto}) @ValidateNested() @Type(()=>ActionConfigDto) config!:ActionConfigDto;
+ @ApiProperty({type:ActionConfigDto}) @IsDefined() @ValidateNested() @Type(()=>ActionConfigDto) config!:ActionConfigDto;
 }
 export class CreateAutomationDto {
  @ApiProperty() @IsString() @MinLength(1) @MaxLength(200) name!:string;
- @ApiProperty({type:TriggerDto}) @ValidateNested() @Type(()=>TriggerDto) trigger!:TriggerDto;
+ @ApiProperty({type:TriggerDto}) @IsDefined() @ValidateNested() @Type(()=>TriggerDto) trigger!:TriggerDto;
  @ApiProperty({type:[ActionDto]}) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(20) @ValidateNested({each:true}) @Type(()=>ActionDto) actions!:ActionDto[];
  @ApiProperty() @IsNumber() @Min(0) @Max(8760) cooldownHours!:number;
  @ApiProperty() @IsBoolean() isActive!:boolean;

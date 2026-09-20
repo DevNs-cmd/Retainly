@@ -6,6 +6,8 @@ import { Queue } from 'bullmq';
 import { QueueNames } from '../queues/queue-names';
 import { OutboxRepository } from './outbox.repository';
 export const EVENT_ROUTES: Record<string, QueueNames[]> = {
+  'membership.invited': [QueueNames.NOTIFICATION],
+  'subscription.status.changed': [QueueNames.RISK,QueueNames.ANALYTICS],
   'course.synced': [QueueNames.ANALYTICS],
   'student.synced': [QueueNames.RISK, QueueNames.ANALYTICS],
   'payment.recorded': [QueueNames.ANALYTICS],

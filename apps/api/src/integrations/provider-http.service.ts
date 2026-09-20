@@ -8,7 +8,7 @@ export class ProviderHttp {
      const response = await fetch(url, { ...init, redirect: 'error', signal: AbortSignal.timeout(15000) });
      if (!response.ok) throw new Error('Provider status ' + response.status);
      if (response.status === 204) return undefined as T;
-     return await response.json() as T;
+     const body=await response.text();return (body?JSON.parse(body):undefined) as T;
    } catch { throw new BadGatewayException('External provider request failed'); }
  }
 }

@@ -1,5 +1,7 @@
 import { IsString, IsOptional, MaxLength, ValidateNested } from 'class-validator'; import { Type } from 'class-transformer'; import { ApiPropertyOptional } from '@nestjs/swagger';
 export class CredentialsDto {
+ @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(1000) clientId?:string;
+ @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(10000) clientSecret?:string;
  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(10000) apiKey?: string;
  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(10000) accessToken?: string;
  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(10000) refreshToken?: string;

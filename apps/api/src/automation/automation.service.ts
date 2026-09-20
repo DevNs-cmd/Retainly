@@ -1,6 +1,8 @@
+import { OutboxService } from '../outbox/outbox.service';
 import { Injectable,BadRequestException } from '@nestjs/common';import { DatabaseService,Transaction } from '../data/database.service';import { TenantCache } from '../common/cache/tenant-cache.service';import { ResourceService } from '../common/resource.service';import { AutomationRepository } from './automation.repository';import { AutomationRule,TriggerType,ActionType } from '../data/entities';
 @Injectable()export class AutomationService extends ResourceService<'automationRule'>{
- constructor(repository:AutomationRepository,db:DatabaseService,cache:TenantCache){super(repository,db,cache);}
+ constructor(repository:AutomationRepository,db:DatabaseService,cache:TenantCache,private readonly outbox:OutboxService){super(repository,db,cache);}
+ async run(id:string,studentId:string){const rule=await this.get(id);if(!rule.isActive||rule.trigger.type!==TriggerType.MANUAL)throw new BadRequestException('An active manual rule is required');const student=await this.db.require('student',this.repository.organizationId,studentId);if(student.deletedAt)throw new BadRequestException('Student is deleted');await this.db.transaction(tx=>this.outbox.create({organizationId:this.repository.organizationId,eventType:'automation.evaluate',payload:{type:'MANUAL',studentId,ruleId:id}},tx));return {queued:true};}
  protected async validate(data:Partial<AutomationRule>,tx?:Transaction){
    await super.validate(data,tx);
    if(data.trigger){

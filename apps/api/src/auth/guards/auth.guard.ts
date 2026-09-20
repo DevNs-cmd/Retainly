@@ -10,7 +10,7 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const match = /^Bearer ([^\s]+)$/i.exec(request.headers.authorization || '');
     if (!match) throw new UnauthorizedException('Bearer token required');
-    request.user = await this.auth.authenticate(match[1]);
+    request.user = await this.auth.authenticate(match[1],this.reflector.getAllAndOverride<boolean>('auth:invitation',[context.getHandler(),context.getClass()])===true);
     return true;
   }
 }

@@ -14,6 +14,8 @@ export class ActivityIngestionService {
       const results: StudentActivity[] = [];
       for (let index = 0; index < events.length; index++) {
         const dto = events[index];
+        const student = await tx.student.findFirst({ where: { id: dto.studentId, organizationId, deletedAt: null }, select: { id: true } });
+        if (!student) throw new BadRequestException('Student does not belong to this organization');
         const activity = await this.repository.create(organizationId, dto, tx, stableId ? stableId + '-' + index : undefined);
         const payload: Prisma.InputJsonObject = {
           activityId: activity.id, studentId: activity.studentId,

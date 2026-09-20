@@ -2,6 +2,9 @@ import { Global, Injectable, Module, NotFoundException, ServiceUnavailableExcept
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModelMap, ModelName, Row } from './entities';
+import { ConfigService } from '@nestjs/config';
+import { DEFAULT_LIMITS } from '../billing/plan-policy';
+import { ForbiddenException } from '@nestjs/common';
 export type Predicate<T> = { [P in keyof T]?: T[P] | { equals?: T[P]; in?: T[P][]; not?: T[P]; gt?: T[P]; gte?: T[P]; lt?: T[P]; lte?: T[P]; contains?: string; mode?: string; } } & { AND?: Predicate<T>[]; OR?: Predicate<T>[] };
 export interface ReadOptions<T> { distinct?: (keyof T)[]; skip?: number; take?: number; orderBy?: Partial<Record<keyof T, 'asc'|'desc'>> | Partial<Record<keyof T, 'asc'|'desc'>>[]; }
 export interface Delegate<T> {
@@ -16,7 +19,7 @@ export type Transaction = Prisma.TransactionClient;
 /** Only this bridge casts a future generated delegate. It fails closed when the model is absent. */
 @Injectable()
 export class DatabaseService {
- constructor(private readonly prisma: PrismaService) {}
+ constructor(private readonly prisma: PrismaService, private readonly config: ConfigService) {}
  private table<K extends ModelName>(name: K, tx?: Transaction): Delegate<ModelMap[K]> {
    const delegate = (tx || this.prisma)[name as keyof (PrismaService | Transaction)] as unknown;
    if (!delegate || typeof (delegate as { findMany?: unknown }).findMany !== 'function')
@@ -46,7 +49,20 @@ export class DatabaseService {
  create<K extends ModelName>(name: K, org: string, data: Partial<ModelMap[K]>, tx?: Transaction) {
    if (!org) throw new BadRequestException('Organization context required');
    const scoped = name === 'organization' ? { ...data, id: org } : { ...data, organizationId: org };
-   return this.table(name, tx).create({ data: scoped as Partial<ModelMap[K]> });
+   const write = async (connection: Transaction) => {
+     const metric = name === 'student' ? 'students' : name === 'course' ? 'courses' : name === 'notificationLog' && (data as Partial<ModelMap['notificationLog']>).channel === 'EMAIL' ? 'emails' : undefined;
+     if (metric) {
+       const organization = await this.require('organization', org, org, connection);
+       const configured = JSON.parse(this.config.get<string>('PLAN_LIMITS_JSON') || '{}');
+       const limit = configured[organization.planTier]?.[metric] ?? DEFAULT_LIMITS[organization.planTier][metric];
+       const used = metric === 'emails'
+         ? await this.count('notificationLog', org, { channel:'EMAIL', createdAt:{gte:new Date(new Date().toISOString().slice(0,7)+'-01T00:00:00Z')}, status:{in:['PENDING','SENDING','SENT','UNCERTAIN','RETRYING']} }, connection)
+         : await this.count(name as 'student'|'course', org, {deletedAt:null}, connection);
+       if (!Number.isFinite(limit) || used >= limit) throw new ForbiddenException('Plan limit reached: '+metric);
+     }
+     return this.table(name, connection).create({data:scoped as Partial<ModelMap[K]>});
+   };
+   return tx ? write(tx) : this.transaction(write);
  }
  async update<K extends ModelName>(name: K, org: string, id: string, data: Partial<ModelMap[K]>, tx?: Transaction) {
    const { id: ignoredId, organizationId: ignoredOrg, createdAt: ignoredCreated, ...safe } = data;

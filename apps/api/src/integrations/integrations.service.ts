@@ -15,20 +15,21 @@ import { CredentialVault, Credentials } from './credential-vault'; import { Prov
      const expected = JSON.stringify({ org, provider, user: this.tenant.userId });
      const accepted = await this.redis.eval("if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end", 1, 'oauth:' + dto.state, expected);
      if (!accepted) throw new ForbiddenException('OAuth state invalid or expired');
-     credentials = await this.registry.bridgeCall<Credentials>(provider, 'oauth/token', { code: dto.code });
+     credentials = await this.registry.token(provider,dto.code);
    }
    if (!credentials) {
      const state = randomUUID(); await this.redis.set('oauth:' + state, JSON.stringify({ org, provider, user: this.tenant.userId }), 'EX', 600);
-     return this.registry.bridgeCall<{ authorizationUrl: string }>(provider, 'oauth/authorize', { state });
+     return this.registry.authorize(provider,state);
    }
    if (!credentials.apiKey && !credentials.accessToken) throw new BadRequestException('API key or access token required');
+   const webhookUrl=this.routing.url(org,provider);
    const encryptedCredentials = this.vault.encrypt(org, provider, credentials);
    const row = await this.db.transaction(async tx => {
      const existing = await this.db.first('integrationConnection', org, { provider }, tx);
      return existing ? this.db.update('integrationConnection', org, existing.id, { encryptedCredentials, status: 'CONNECTED' }, tx) :
        this.db.create('integrationConnection', org, { provider, encryptedCredentials, config: {}, status: 'CONNECTED' }, tx);
    });
-   return { ...this.public(row), webhookUrl: this.routing.url(org, provider) };
+   return { ...this.public(row), webhookUrl };
  }
  async disconnect(provider: string) {
    this.registry.assert(provider); const row = await this.db.first('integrationConnection', this.tenant.organizationId, { provider });
@@ -39,7 +40,8 @@ import { CredentialVault, Credentials } from './credential-vault'; import { Prov
  async sync(provider: string) {
    this.registry.assert(provider); const connection = await this.db.first('integrationConnection', this.tenant.organizationId, { provider, status: 'CONNECTED' });
    if (!connection) throw new BadRequestException('Integration is not connected');
-   const jobs = ['stripe','paypal'].includes(provider) ? ['SYNC_PAYMENTS'] : ['SYNC_COURSES','SYNC_STUDENTS','SYNC_ENROLLMENTS'];
+   if(!['kajabi','teachable','thinkific','podia','learnworlds','stripe','paypal'].includes(provider))throw new BadRequestException('This provider does not support course or payment synchronization');
+   const jobs = ['SYNC_CONNECTION'];
    for (const name of jobs) await withTimeout(this.queue.add(name, { organizationId: this.tenant.organizationId, provider }));
    return { queued: jobs };
  }
