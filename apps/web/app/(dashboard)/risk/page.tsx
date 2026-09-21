@@ -1,102 +1,237 @@
 'use client';
 
-import React from 'react';
-import { AlertTriangle, TrendingDown, Users, ShieldAlert, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, TrendingDown, Users, ShieldAlert, Filter, Loader2, CheckCircle2 } from 'lucide-react';
 import { AtRiskStudents } from '../../../components/dashboard/AtRiskStudents';
 import { MOCK_STUDENTS } from '../../../mock/students';
+import { useToast } from '../../../context/ToastContext';
 
 export default function RiskAndChurnPage() {
+  const [isScanning, setIsScanning] = useState(false);
+  const [selectedCohort, setSelectedCohort] = useState('ALL');
+  const [selectedCourse, setSelectedCourse] = useState('ALL');
+
+  const { success } = useToast();
+
+  const handleRunRescan = () => {
+    setIsScanning(true);
+    setTimeout(() => {
+      setIsScanning(false);
+      success('AI Risk Rescan Completed', 'Analyzed 4,820 learning signals across 4 cohorts. 14 risk scores were refreshed.');
+    }, 1200);
+  };
+
+  const filteredStudents = MOCK_STUDENTS.filter((s) => {
+    const matchesCohort =
+      selectedCohort === 'ALL' ||
+      (selectedCohort === 'CRITICAL' && s.riskLevel === 'CRITICAL') ||
+      (selectedCohort === 'HIGH' && s.riskLevel === 'HIGH') ||
+      (selectedCohort === 'MEDIUM' && s.riskLevel === 'MEDIUM');
+
+    const matchesCourse = selectedCourse === 'ALL' || s.course === selectedCourse;
+    return matchesCohort && matchesCourse;
+  });
+
   return (
     <div className="space-y-6 font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Risk & Churn Intelligence</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Identify students who need intervention before they cancel or drop out.
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Risk & Churn Intelligence
+          </h1>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Identify students needing immediate coach outreach before they cancel or drop out.
           </p>
         </div>
 
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>Run AI Risk Rescan</span>
+        <button
+          onClick={handleRunRescan}
+          disabled={isScanning}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all disabled:opacity-75"
+        >
+          {isScanning ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+              <span>Scanning student cohorts...</span>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="w-4 h-4" />
+              <span>Run AI Risk Rescan</span>
+            </>
+          )}
         </button>
       </div>
 
-      {/* Top Cards (Section 16) */}
+      {/* Top Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Total Students</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1">4,820</div>
-          <span className="text-[11px] text-slate-400 font-medium">Active in workspace</span>
+        <div
+          className="p-5 rounded-2xl border shadow-xs transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+            Total Active Students
+          </span>
+          <div className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+            4,820
+          </div>
+          <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+            Active across all courses
+          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">At Risk</span>
-          <div className="text-2xl font-bold text-amber-600 mt-1">342</div>
-          <span className="text-[11px] text-amber-600 font-semibold">7.1% of total cohort</span>
+        <div
+          className="p-5 rounded-2xl border shadow-xs transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+            At Risk Cohort
+          </span>
+          <div className="text-2xl font-bold mt-1 text-amber-500 dark:text-amber-400">
+            342
+          </div>
+          <span className="text-[11px] font-semibold text-amber-500 dark:text-amber-400">
+            7.1% of total enrolled
+          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">High Risk</span>
-          <div className="text-2xl font-bold text-rose-600 mt-1">126</div>
-          <span className="text-[11px] text-rose-600 font-semibold">Score &gt; 75</span>
+        <div
+          className="p-5 rounded-2xl border shadow-xs transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+            High Churn Probability
+          </span>
+          <div className="text-2xl font-bold mt-1 text-rose-500 dark:text-rose-400">
+            126
+          </div>
+          <span className="text-[11px] font-semibold text-rose-500 dark:text-rose-400">
+            Score &gt; 75 (Urgent)
+          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Critical</span>
-          <div className="text-2xl font-bold text-red-700 mt-1">28</div>
-          <span className="text-[11px] text-red-700 font-semibold">Urgent action needed</span>
+        <div
+          className="p-5 rounded-2xl border shadow-xs transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+            Critical Interventions
+          </span>
+          <div className="text-2xl font-bold mt-1 text-red-500 dark:text-red-400">
+            28
+          </div>
+          <span className="text-[11px] font-semibold text-red-500 dark:text-red-400">
+            Needs immediate coach call
+          </span>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div
+        className="p-4 rounded-2xl border shadow-xs flex flex-wrap items-center justify-between gap-4 transition-colors"
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderColor: 'var(--border-card)',
+        }}
+      >
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-700">Filter Risk Cohorts:</span>
+          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+            Cohort Filters:
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <select className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700">
-            <option>All Risk Levels</option>
-            <option>Critical (&gt; 90)</option>
-            <option>High Risk (75-90)</option>
-            <option>Medium Risk (50-75)</option>
+          <select
+            value={selectedCohort}
+            onChange={(e) => setSelectedCohort(e.target.value)}
+            className="px-3 py-1.5 rounded-xl font-medium border focus:outline-none"
+            style={{
+              backgroundColor: 'var(--bg-input)',
+              borderColor: 'var(--border-input)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <option value="ALL">All Risk Cohorts</option>
+            <option value="CRITICAL">Critical Only (&gt; 85)</option>
+            <option value="HIGH">High Risk (70 - 85)</option>
+            <option value="MEDIUM">Medium Risk (50 - 70)</option>
           </select>
 
-          <select className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700">
-            <option>All Courses</option>
-            <option>AI Masterclass</option>
-            <option>Python Bootcamp</option>
-            <option>Marketing Pro</option>
+          <select
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            className="px-3 py-1.5 rounded-xl font-medium border focus:outline-none"
+            style={{
+              backgroundColor: 'var(--bg-input)',
+              borderColor: 'var(--border-input)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <option value="ALL">All Enrolled Courses</option>
+            <option value="AI Masterclass">AI Masterclass</option>
+            <option value="Python Bootcamp">Python Bootcamp</option>
+            <option value="Marketing Pro">Marketing Pro</option>
           </select>
         </div>
       </div>
 
-      {/* Main Content: At Risk Students Table + Risk Signals */}
+      {/* Main Content: At Risk Students Table + Risk Factors */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <AtRiskStudents students={MOCK_STUDENTS} />
+          <AtRiskStudents students={filteredStudents} />
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900">Top Churn Risk Factors</h3>
+        <div
+          className="p-6 rounded-2xl border shadow-xs space-y-4 transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
+          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+            Top Churn Risk Drivers
+          </h2>
 
           <div className="space-y-3">
-            <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
-              <h4 className="text-xs font-bold text-rose-900">1. Inactivity &gt; 7 Days</h4>
-              <p className="text-[11px] text-rose-700 mt-0.5">Accounts inactive for 7 days have an 84% higher churn probability.</p>
+            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+              <h4 className="text-xs font-bold text-rose-500 dark:text-rose-300">
+                1. Prolonged Inactivity (&gt; 7 Days)
+              </h4>
+              <p className="text-[11px] mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                Students inactive for over a week show an 84% probability of course abandonment.
+              </p>
             </div>
 
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
-              <h4 className="text-xs font-bold text-amber-900">2. Stalled Module Completion</h4>
-              <p className="text-[11px] text-amber-700 mt-0.5">Students stuck on Module 3 for over 10 days.</p>
+            <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              <h4 className="text-xs font-bold text-amber-600 dark:text-amber-300">
+                2. Stalled Quiz / Module Completion
+              </h4>
+              <p className="text-[11px] mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                Failing Module 3 assessment twice causes a sharp spike in cancellation intent.
+              </p>
             </div>
 
-            <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <h4 className="text-xs font-bold text-indigo-900">3. Expiring Subscriptions</h4>
-              <p className="text-[11px] text-indigo-700 mt-0.5">Renewals approaching with auto-renew toggled off.</p>
+            <div className="p-3.5 bg-sky-500/10 border border-sky-500/20 rounded-xl">
+              <h4 className="text-xs font-bold text-sky-600 dark:text-sky-300">
+                3. Subscription Renewal with Auto-Renew Off
+              </h4>
+              <p className="text-[11px] mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">
+                Billing reminders sent without automated intervention produce only 12% renewal.
+              </p>
             </div>
           </div>
         </div>
