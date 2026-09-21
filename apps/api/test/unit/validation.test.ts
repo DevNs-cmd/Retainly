@@ -18,3 +18,12 @@ test('pagination transforms query strings and bounds limits and sort fields', as
   await assert.rejects(pipe.transform({ limit: '10000' }, { type: 'query', metatype: ListActivitiesDto }));
   await assert.rejects(pipe.transform({ sortBy: 'organizationId' }, { type: 'query', metatype: ListActivitiesDto }));
 });
+test('ListActivitiesDto supports both type and activityType filters', async () => {
+  const queryWithType = await pipe.transform({ type: 'LOGIN' }, { type: 'query', metatype: ListActivitiesDto });
+  assert.equal(queryWithType.type, 'LOGIN');
+  const queryWithActivityType = await pipe.transform({ activityType: 'LESSON_COMPLETE' }, { type: 'query', metatype: ListActivitiesDto });
+  assert.equal(queryWithActivityType.activityType, 'LESSON_COMPLETE');
+  await assert.rejects(pipe.transform({ type: 'INVALID_TYPE' }, { type: 'query', metatype: ListActivitiesDto }));
+  await assert.rejects(pipe.transform({ activityType: 'INVALID_TYPE' }, { type: 'query', metatype: ListActivitiesDto }));
+});
+

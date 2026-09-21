@@ -1,1 +1,0 @@
-export const COMMON_CONSTANTS_PLACEHOLDER = true;

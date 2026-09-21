@@ -5,4 +5,5 @@ import { ActivityType } from './create-activity.dto';
 export class ListActivitiesDto extends PaginationDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(128) studentId?: string;
   @ApiPropertyOptional({ enum: ActivityType }) @IsOptional() @IsEnum(ActivityType) type?: ActivityType;
+  @ApiPropertyOptional({ enum: ActivityType }) @IsOptional() @IsEnum(ActivityType) activityType?: ActivityType;
 }
