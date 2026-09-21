@@ -1,1 +1,2 @@
-export const COMMON_INTERCEPTOR_PLACEHOLDER = true;
+export * from './logging.interceptor';
+

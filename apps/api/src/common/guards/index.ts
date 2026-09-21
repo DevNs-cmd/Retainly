@@ -1,1 +1,2 @@
-export const COMMON_GUARD_PLACEHOLDER = true;
+export * from './plan.guard';
+

@@ -14,6 +14,9 @@ import { QueueNames } from '../../src/queues/queue-names';
 import { WebhookIdempotencyService } from '../../src/webhooks/idempotency/webhook-idempotency.service';
 import { RedisService } from '../../src/redis/redis.module';
 import { ListActivitiesDto } from '../../src/activities/dto/list-activities.dto';
+import { ConfigService } from '@nestjs/config';
+import { RiskScoringAdapter } from '../../src/risk/services/risk-scoring.adapter';
+
 
 test('activity and outbox use the same transaction and an outbox failure rejects ingestion', async () => {
   const tx = { student: { findFirst: async () => ({id:'student'}) } } as unknown as Prisma.TransactionClient;
@@ -75,3 +78,51 @@ test('Redis idempotency uses tenant/provider/event keys, SET NX and 24-hour proc
   await service.markProcessed(key);
   assert.deepEqual(calls[1], [key, 'processed', 'EX', 86400]);
 });
+
+test('activity list applies activityType filter alias', async () => {
+  const filters: unknown[] = [];
+  const prisma = { studentActivity: {
+    findMany: (args: { where: unknown }) => { filters.push(args.where); return Promise.resolve([]); },
+    count: (args: { where: unknown }) => { filters.push(args.where); return Promise.resolve(0); },
+  }, $transaction: (queries: Promise<unknown>[]) => Promise.all(queries) } as unknown as PrismaService;
+  await new ActivitiesRepository(prisma).list('org-b', Object.assign(new ListActivitiesDto(), { studentId: 'student-a', activityType: ActivityType.LOGIN }));
+  assert.equal(filters.length, 2);
+  for (const filter of filters) assert.deepEqual(filter, { organizationId: 'org-b', studentId: 'student-a', activityType: ActivityType.LOGIN });
+});
+
+test('RiskScoringAdapter falls back to heuristic calculation when unconfigured or offline', async () => {
+  const adapter = new RiskScoringAdapter(new ConfigService({}));
+  const lowRisk = await adapter.calculate({
+    studentId: 'student-1',
+    organizationId: 'org-a',
+    windowDays: 90,
+    activityCount: 25,
+    daysSinceLastLogin: 2,
+    daysSinceLastActivity: 2,
+    lessonCompletions: 10,
+    failedPayments: 0,
+    countsByType: {},
+    tenureMonths: 6,
+  });
+  assert.ok(lowRisk.score >= 0 && lowRisk.score <= 1);
+  assert.equal(lowRisk.confidence, 0.6);
+  assert.ok(lowRisk.reasons.length > 0);
+
+  const highRisk = await adapter.calculate({
+    studentId: 'student-2',
+    organizationId: 'org-a',
+    windowDays: 90,
+    activityCount: 1,
+    daysSinceLastLogin: 45,
+    daysSinceLastActivity: 45,
+    lessonCompletions: 0,
+    failedPayments: 2,
+    countsByType: { SUPPORT_TICKET: 4 },
+    tenureMonths: 1,
+  });
+  assert.ok(highRisk.score > lowRisk.score);
+  assert.ok(highRisk.reasons.some(r => r.includes('Low engagement')));
+  assert.ok(highRisk.reasons.some(r => r.includes('Payment failures')));
+  assert.ok(highRisk.reasons.some(r => r.includes('High support tickets')));
+});
+

@@ -1,1 +1,3 @@
-export const COMMON_DTO_PLACEHOLDER = true;
+export * from './pagination.dto';
+export * from './resource-query.dto';
+
