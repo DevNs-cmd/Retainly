@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Filter, Calendar, Sparkles } from 'lucide-react';
+import { Filter, Calendar } from 'lucide-react';
 import { KPICard } from '../../../components/dashboard/KPICard';
 import { RetentionChart } from '../../../components/dashboard/RetentionChart';
 import { RetentionHealth } from '../../../components/dashboard/RetentionHealth';
@@ -44,15 +44,15 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-slate-200/60 rounded-xl w-64"></div>
+        <div className="h-10 rounded-xl w-64" style={{ backgroundColor: 'var(--bg-card)' }}></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 bg-white rounded-2xl border border-slate-200/80"></div>
+            <div key={i} className="h-28 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-card)' }}></div>
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80">
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80"></div>
-          <div className="bg-white rounded-2xl border border-slate-200/80"></div>
+          <div className="lg:col-span-2 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-card)' }}></div>
+          <div className="rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-card)' }}></div>
         </div>
       </div>
     );
@@ -60,28 +60,48 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Dashboard Top Header (Matching reference: Good morning, Alex 👋) */}
+      {/* Dashboard Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Good morning, Alex</span>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <span>Good morning,</span>
+            <span className="relative inline-block text-amber-500 dark:text-amber-400">
+              Alex
+              <svg className="absolute -bottom-1.5 left-0 w-full h-2 text-amber-500 dark:text-amber-400" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d="M0 15 Q 50 0, 100 12" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+              </svg>
+            </span>
             <span className="text-xl">👋</span>
           </h1>
-          <p className="text-xs font-medium text-slate-400 mt-0.5">
-            Here&apos;s your AI student retention overview.
+          <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+            Here is your AI student retention intelligence overview.
           </p>
         </div>
 
         {/* Top-Right Controls */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 shadow-xs cursor-pointer hover:bg-slate-50 transition-all">
-            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+          <div
+            className="flex items-center gap-2 px-3.5 py-2 border rounded-xl text-xs font-semibold shadow-xs cursor-pointer hover:opacity-90 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-card)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <Calendar className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             <span>Last 30 days</span>
-            <span className="text-slate-400">▼</span>
+            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>▼</span>
           </div>
 
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-all">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <button
+            className="flex items-center gap-1.5 px-3.5 py-2 border rounded-xl text-xs font-semibold shadow-xs hover:opacity-90 transition-all"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-card)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <Filter className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
             <span>Filter</span>
           </button>
         </div>

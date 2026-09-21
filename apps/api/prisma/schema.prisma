@@ -631,3 +631,21 @@ model OutboxEvent {
   @@index([organizationId, eventType])
   @@map("outbox_events")
 }
+
+// ---------------------------------------------------------------------------
+// Idempotency
+// ---------------------------------------------------------------------------
+
+model ConsumerReceipt {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  consumer       String
+  eventId        String   @map("event_id")
+  completedAt    DateTime @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, consumer, eventId])
+  @@index([organizationId, consumer])
+  @@map("consumer_receipts")
+}

@@ -12,25 +12,44 @@ export function RetentionChart({ data }: RetentionChartProps) {
   const [period, setPeriod] = useState<'Day' | 'Week' | 'Month'>('Week');
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs font-sans h-full flex flex-col justify-between">
+    <div
+      className="p-6 rounded-2xl border shadow-xs font-sans h-full flex flex-col justify-between transition-colors"
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        borderColor: 'var(--border-card)',
+      }}
+    >
       {/* Chart Top Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">Retention & Engagement</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Cohort activity & AI recovery performance</p>
+          <h3 className="text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Retention & Engagement
+          </h3>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Cohort activity & AI recovery performance
+          </p>
         </div>
 
         {/* Period Selector Pills */}
-        <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl">
+        <div
+          className="flex items-center gap-1 p-1 rounded-xl border"
+          style={{
+            backgroundColor: 'var(--bg-subtle)',
+            borderColor: 'var(--border-card)',
+          }}
+        >
           {(['Day', 'Week', 'Month'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 period === p
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
+                  : 'opacity-70 hover:opacity-100'
               }`}
+              style={{
+                color: period === p ? '#0c141c' : 'var(--text-secondary)',
+              }}
             >
               {p}
             </button>
@@ -46,47 +65,73 @@ export function RetentionChart({ data }: RetentionChartProps) {
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="retentionGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#f5b82e" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#f5b82e" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="engagementGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
               <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[60, 100]} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
-                itemStyle={{ color: '#fff' }}
+                contentStyle={{
+                  backgroundColor: 'var(--toast-bg)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-card)',
+                  color: 'var(--toast-text)',
+                  fontSize: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                }}
+                itemStyle={{ color: 'var(--toast-text)' }}
               />
-              <Area type="monotone" dataKey="retentionRate" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#retentionGrad)" name="Retention Rate (%)" />
-              <Area type="monotone" dataKey="engagementRate" stroke="#06b6d4" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#engagementGrad)" name="Engagement Rate (%)" />
+              <Area type="monotone" dataKey="retentionRate" stroke="#f5b82e" strokeWidth={3} fillOpacity={1} fill="url(#retentionGrad)" name="Retention Rate (%)" />
+              <Area type="monotone" dataKey="engagementRate" stroke="#38bdf8" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#engagementGrad)" name="Engagement Rate (%)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Right Side Stats Column (Matching reference image summary structure) */}
-        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-6 pt-4 lg:pt-0 space-y-4">
+        {/* Right Side Stats Column */}
+        <div
+          className="lg:col-span-1 border-t lg:border-t-0 lg:border-l lg:pl-6 pt-4 lg:pt-0 space-y-4"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Retention</span>
-            <p className="text-xl font-bold text-slate-900 mt-0.5">87.4%</p>
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+              Retention
+            </span>
+            <p className="text-xl font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
+              87.4%
+            </p>
           </div>
-          <div className="w-full h-px bg-slate-100"></div>
+          <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Engagement</span>
-            <p className="text-xl font-bold text-slate-900 mt-0.5">74.8%</p>
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+              Engagement
+            </span>
+            <p className="text-xl font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
+              74.8%
+            </p>
           </div>
-          <div className="w-full h-px bg-slate-100"></div>
+          <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">At-Risk</span>
-            <p className="text-xl font-bold text-rose-600 mt-0.5">342</p>
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+              At-Risk
+            </span>
+            <p className="text-xl font-bold mt-0.5 text-rose-500">
+              342
+            </p>
           </div>
-          <div className="w-full h-px bg-slate-100"></div>
+          <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
           <div>
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Recovered</span>
-            <p className="text-xl font-bold text-emerald-600 mt-0.5">126</p>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-500 dark:text-amber-400">
+              Recovered
+            </span>
+            <p className="text-xl font-bold mt-0.5 text-amber-500 dark:text-amber-400">
+              126
+            </p>
           </div>
         </div>
       </div>

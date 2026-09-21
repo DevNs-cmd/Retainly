@@ -1,3 +1,10 @@
+import { AuditInterceptor } from './audit/audit.interceptor';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { InfrastructureModule } from './infrastructure.module';
+import { HealthController } from './health/health.controller';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { TenantModule } from './tenant/tenant.module';
@@ -26,7 +33,18 @@ import { UsageModule } from './usage/usage.module';
 import { AuditModule } from './audit/audit.module';
 
 @Module({
+  controllers: [HealthController],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+  ],
   imports: [
+    InfrastructureModule,
+    // ScheduleModule.forRoot() activates @Cron decorators — must be present in every
+    // NestJS application context that uses scheduled tasks (OutboxPublisher, etc.).
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     AuthModule,
     TenantModule,
     OrganizationsModule,
