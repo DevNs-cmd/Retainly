@@ -9,16 +9,33 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      AUTH_ISSUER: https://issuer.example/
+      AUTH_AUDIENCE: retainly
+      PORT: "3000"
+      NODE_ENV: test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-secret-for-testing-only
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24.12.0
+
       - uses: pnpm/action-setup@v4
-      - run: pnpm install --frozen-lockfile
+        with:
+          version: 11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Generate Prisma client
         run: pnpm --filter @retainly/api prisma:generate
-        env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      - run: pnpm lint
-      - run: pnpm test
+
+      - name: Lint
+        run: pnpm --filter @retainly/api lint
+
+      - name: Test
+        run: pnpm --filter @retainly/api test
