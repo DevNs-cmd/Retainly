@@ -118,91 +118,100 @@ export function AnalyticsRetentionGraph({ data, range }: AnalyticsRetentionGraph
       </div>
 
       {/* Main Recharts Area Chart */}
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="retentionAnalyticsGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="churnAnalyticsGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#e11d48" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              domain={metricView === 'churn' ? [0, 12] : [0, 100]}
-              unit="%"
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
-                  const item = payload[0].payload as RetentionDataPoint;
-                  return (
-                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs space-y-1.5 min-w-[170px]">
-                      <div className="font-semibold text-slate-200 border-b border-slate-700/60 pb-1 flex justify-between">
-                        <span>{label}</span>
-                        <span className="text-slate-400 font-normal">{item.date}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-indigo-400">
-                        <span>Retention Rate:</span>
-                        <span className="font-bold">{item.retentionRate}%</span>
-                      </div>
-                      <div className="flex items-center justify-between text-rose-400">
-                        <span>Churn Rate:</span>
-                        <span className="font-bold">{item.churnRate}%</span>
-                      </div>
-                      <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-slate-800">
-                        <span>Active Students:</span>
-                        <span className="font-medium">{item.activeStudents}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-amber-400">
-                        <span>At Risk:</span>
-                        <span className="font-medium">{item.atRiskStudents}</span>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            {(metricView === 'all' || metricView === 'retention') && (
-              <Area
-                type="monotone"
-                dataKey="retentionRate"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#retentionAnalyticsGrad)"
-                name="Retention Rate (%)"
+      {data.length === 0 ? (
+        <div className="h-72 flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-xl border-slate-200">
+          <p className="text-sm font-semibold text-slate-800">No Retention Data Recorded</p>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Retention and churn trajectories will plot automatically as periodic AI evaluations are recorded.
+          </p>
+        </div>
+      ) : (
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="retentionAnalyticsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="churnAnalyticsGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
               />
-            )}
-            {(metricView === 'all' || metricView === 'churn') && (
-              <Area
-                type="monotone"
-                dataKey="churnRate"
-                stroke="#e11d48"
-                strokeWidth={2.5}
-                strokeDasharray="4 4"
-                fillOpacity={1}
-                fill="url(#churnAnalyticsGrad)"
-                name="Churn Rate (%)"
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                domain={metricView === 'churn' ? [0, 12] : [0, 100]}
+                unit="%"
               />
-            )}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const item = payload[0].payload as RetentionDataPoint;
+                    return (
+                      <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs space-y-1.5 min-w-[170px]">
+                        <div className="font-semibold text-slate-200 border-b border-slate-700/60 pb-1 flex justify-between">
+                          <span>{label}</span>
+                          <span className="text-slate-400 font-normal">{item.date}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-indigo-400">
+                          <span>Retention Rate:</span>
+                          <span className="font-bold">{item.retentionRate}%</span>
+                        </div>
+                        <div className="flex items-center justify-between text-rose-400">
+                          <span>Churn Rate:</span>
+                          <span className="font-bold">{item.churnRate}%</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-slate-800">
+                          <span>Active Students:</span>
+                          <span className="font-medium">{item.activeStudents}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-amber-400">
+                          <span>At Risk:</span>
+                          <span className="font-medium">{item.atRiskStudents}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              {(metricView === 'all' || metricView === 'retention') && (
+                <Area
+                  type="monotone"
+                  dataKey="retentionRate"
+                  stroke="#4f46e5"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#retentionAnalyticsGrad)"
+                  name="Retention Rate (%)"
+                />
+              )}
+              {(metricView === 'all' || metricView === 'churn') && (
+                <Area
+                  type="monotone"
+                  dataKey="churnRate"
+                  stroke="#e11d48"
+                  strokeWidth={2.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={1}
+                  fill="url(#churnAnalyticsGrad)"
+                  name="Churn Rate (%)"
+                />
+              )}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

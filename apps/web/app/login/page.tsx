@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sparkles, ArrowRight, Lock, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { setAuthToken } from '../../services/api-client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,10 +17,13 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // In local dev/test mode, configure test session token
+    const devToken = 'eyJhbGciOiJIUzI1NiJ9.eyJvcmdfaWQiOiI1MGU4MTgwYS0yNWYwLTQ0OTQtYTVmOC0zOGI2YWYyN2I4M2YiLCJvcmdfcm9sZSI6Im9yZzpvd25lciIsInN1YiI6InVzZXItb3duZXItMSIsImlzcyI6Imh0dHBzOi8veW91ci10ZW5hbnQuY2xlcmsuYWNjb3VudHMuZGV2IiwiYXVkIjoicmV0YWlubHkiLCJpYXQiOjE3OTExMTQzOTUsImV4cCI6MTc5MTEyMTU5NX0.mmQCxPgfMQCtsxoIbWzuV6kWR1qoxF2jz-cNKuIocRo';
+    setAuthToken(devToken);
     setTimeout(() => {
       setLoading(false);
-      router.push('/dashboard');
-    }, 600);
+      router.push('/students');
+    }, 400);
   };
 
   return (

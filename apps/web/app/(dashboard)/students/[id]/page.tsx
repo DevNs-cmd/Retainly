@@ -1,12 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, Mail, CheckSquare, Tag, Activity, Clock, ShieldAlert } from 'lucide-react';
-import { MOCK_STUDENTS } from '../../../../mock/students';
+import { ArrowLeft, AlertTriangle, Mail, CheckSquare, Tag, Activity, Clock, ShieldAlert, Loader2 } from 'lucide-react';
+import { StudentsService } from '../../../../services/students.service';
+import { Student } from '../../../../types/student';
 
 export default function StudentDetailPage({ params }: { params: { id: string } }) {
-  const student = MOCK_STUDENTS.find((s) => s.id === params.id) || MOCK_STUDENTS[0];
+  const [student, setStudent] = useState<Student | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    StudentsService.getStudentById(params.id)
+      .then((data) => {
+        if (data) setStudent(data);
+        else setError('Student not found in directory.');
+      })
+      .catch((err) => setError(err?.message || 'Failed to fetch student details.'))
+      .finally(() => setLoading(false));
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+        <p className="text-sm text-slate-400">Loading student profile from API...</p>
+      </div>
+    );
+  }
+
+  if (error || !student) {
+    return (
+      <div className="space-y-4">
+        <Link href="/students" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Students</span>
+        </Link>
+        <div className="p-8 text-center bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+          <h2 className="text-lg font-bold">Profile Unavailable</h2>
+          <p className="text-xs mt-1">{error || 'Student not found.'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 font-sans">

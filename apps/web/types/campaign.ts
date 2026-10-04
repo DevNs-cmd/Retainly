@@ -14,4 +14,5 @@ export interface RetentionCampaign {
   conversionRate: number; // percentage
   createdAt: string;
   description: string;
+  type?: 'EMAIL' | 'SMS' | 'MIXED';
 }

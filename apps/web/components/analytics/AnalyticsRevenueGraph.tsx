@@ -55,66 +55,75 @@ export function AnalyticsRevenueGraph({ data, range }: AnalyticsRevenueGraphProp
       </div>
 
       {/* Chart Canvas */}
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
-                  const item = payload[0].payload as RevenueDataPoint;
-                  return (
-                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs space-y-1.5 min-w-[170px]">
-                      <div className="font-semibold text-slate-200 border-b border-slate-700/60 pb-1">
-                        {label}
+      {data.length === 0 ? (
+        <div className="h-72 flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-xl border-slate-200">
+          <p className="text-sm font-semibold text-slate-800">No Revenue Impact Data</p>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Revenue recovery and at-risk metrics will appear once student risk assessments are recorded.
+          </p>
+        </div>
+      ) : (
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const item = payload[0].payload as RevenueDataPoint;
+                    return (
+                      <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-800 text-xs space-y-1.5 min-w-[170px]">
+                        <div className="font-semibold text-slate-200 border-b border-slate-700/60 pb-1">
+                          {label}
+                        </div>
+                        <div className="flex items-center justify-between text-emerald-400">
+                          <span>Recovered Revenue:</span>
+                          <span className="font-bold">${item.recoveredRevenue.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-400">
+                          <span>At Risk Revenue:</span>
+                          <span className="font-medium">${item.atRiskRevenue.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-indigo-300 pt-1 border-t border-slate-800">
+                          <span>Recovery Ratio:</span>
+                          <span className="font-semibold">
+                            {((item.recoveredRevenue / (item.recoveredRevenue + item.atRiskRevenue)) * 100).toFixed(1)}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between text-emerald-400">
-                        <span>Recovered Revenue:</span>
-                        <span className="font-bold">${item.recoveredRevenue.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span>At Risk Revenue:</span>
-                        <span className="font-medium">${item.atRiskRevenue.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-indigo-300 pt-1 border-t border-slate-800">
-                        <span>Recovery Ratio:</span>
-                        <span className="font-semibold">
-                          {((item.recoveredRevenue / (item.recoveredRevenue + item.atRiskRevenue)) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Bar
-              dataKey="recoveredRevenue"
-              name="Recovered Revenue"
-              fill="#10b981"
-              radius={[6, 6, 0, 0]}
-            />
-            <Bar
-              dataKey="atRiskRevenue"
-              name="At-Risk Revenue"
-              fill="#cbd5e1"
-              radius={[6, 6, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar
+                dataKey="recoveredRevenue"
+                name="Recovered Revenue"
+                fill="#10b981"
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="atRiskRevenue"
+                name="At-Risk Revenue"
+                fill="#cbd5e1"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

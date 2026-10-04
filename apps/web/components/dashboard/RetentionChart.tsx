@@ -11,6 +11,12 @@ interface RetentionChartProps {
 export function RetentionChart({ data }: RetentionChartProps) {
   const [period, setPeriod] = useState<'Day' | 'Week' | 'Month'>('Week');
 
+  const latest = data && data.length > 0 ? data[data.length - 1] : null;
+  const retentionDisplay = latest ? `${latest.retentionRate}%` : '100%';
+  const engagementDisplay = latest ? `${latest.engagementRate}%` : '100%';
+  const atRiskDisplay = latest ? String(latest.atRiskCount) : '0';
+  const recoveredDisplay = '0';
+
   return (
     <div
       className="p-6 rounded-2xl border shadow-xs font-sans h-full flex flex-col justify-between transition-colors"
@@ -59,38 +65,52 @@ export function RetentionChart({ data }: RetentionChartProps) {
 
       {/* Main Content Grid: Chart (Left) + Stats (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center flex-1">
-        {/* Recharts Canvas */}
-        <div className="lg:col-span-3 h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="retentionGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f5b82e" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#f5b82e" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="engagementGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[60, 100]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--toast-bg)',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-card)',
-                  color: 'var(--toast-text)',
-                  fontSize: '12px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-                }}
-                itemStyle={{ color: 'var(--toast-text)' }}
-              />
-              <Area type="monotone" dataKey="retentionRate" stroke="#f5b82e" strokeWidth={3} fillOpacity={1} fill="url(#retentionGrad)" name="Retention Rate (%)" />
-              <Area type="monotone" dataKey="engagementRate" stroke="#38bdf8" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#engagementGrad)" name="Engagement Rate (%)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Recharts Canvas / Empty State */}
+        <div className="lg:col-span-3 h-64 w-full flex items-center justify-center">
+          {!data || data.length === 0 ? (
+            <div
+              className="text-center p-6 border border-dashed rounded-xl w-full h-full flex flex-col items-center justify-center"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                No Retention Trend Recorded
+              </p>
+              <p className="text-xs mt-1 max-w-sm" style={{ color: 'var(--text-muted)' }}>
+                Cohort activity and retention trajectories will plot dynamically as student risk evaluations are processed.
+              </p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="retentionGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f5b82e" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#f5b82e" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="engagementGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--toast-bg)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-card)',
+                    color: 'var(--toast-text)',
+                    fontSize: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                  }}
+                  itemStyle={{ color: 'var(--toast-text)' }}
+                />
+                <Area type="monotone" dataKey="retentionRate" stroke="#f5b82e" strokeWidth={3} fillOpacity={1} fill="url(#retentionGrad)" name="Retention Rate (%)" />
+                <Area type="monotone" dataKey="engagementRate" stroke="#38bdf8" strokeWidth={2.5} strokeDasharray="4 4" fillOpacity={1} fill="url(#engagementGrad)" name="Engagement Rate (%)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Right Side Stats Column */}
@@ -103,7 +123,7 @@ export function RetentionChart({ data }: RetentionChartProps) {
               Retention
             </span>
             <p className="text-xl font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-              87.4%
+              {retentionDisplay}
             </p>
           </div>
           <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
@@ -112,7 +132,7 @@ export function RetentionChart({ data }: RetentionChartProps) {
               Engagement
             </span>
             <p className="text-xl font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-              74.8%
+              {engagementDisplay}
             </p>
           </div>
           <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
@@ -121,7 +141,7 @@ export function RetentionChart({ data }: RetentionChartProps) {
               At-Risk
             </span>
             <p className="text-xl font-bold mt-0.5 text-rose-500">
-              342
+              {atRiskDisplay}
             </p>
           </div>
           <div className="w-full h-px" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
@@ -130,7 +150,7 @@ export function RetentionChart({ data }: RetentionChartProps) {
               Recovered
             </span>
             <p className="text-xl font-bold mt-0.5 text-amber-500 dark:text-amber-400">
-              126
+              {recoveredDisplay}
             </p>
           </div>
         </div>

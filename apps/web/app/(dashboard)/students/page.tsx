@@ -1,14 +1,15 @@
 'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, AlertTriangle, ArrowUpDown, ChevronLeft, ChevronRight, Plus, X, UserPlus, RotateCcw } from 'lucide-react';
-import { MOCK_STUDENTS } from '../../../mock/students';
+import { Search, AlertTriangle, ArrowUpDown, ChevronLeft, ChevronRight, Plus, X, UserPlus, RotateCcw, Loader2 } from 'lucide-react';
+import { StudentsService } from '../../../services/students.service';
 import { Student, RiskLevel } from '../../../types/student';
 import { useToast } from '../../../context/ToastContext';
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>(MOCK_STUDENTS);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRisk, setSelectedRisk] = useState<string>('ALL');
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
@@ -19,8 +20,26 @@ export default function StudentsPage() {
   const [newCourse, setNewCourse] = useState('AI Masterclass');
   const [newRisk, setNewRisk] = useState<RiskLevel>('LOW');
   const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const { success } = useToast();
+  const { success, error: toastError } = useToast();
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const data = await StudentsService.getStudents();
+      setStudents(data);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch students from API');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -32,7 +51,7 @@ export default function StudentsPage() {
     return matchesSearch && matchesRisk;
   });
 
-  const handleEnrollSubmit = (e: React.FormEvent) => {
+  const handleEnrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim()) {
       setFormError('Please enter the student full name and email address.');
@@ -43,32 +62,23 @@ export default function StudentsPage() {
       return;
     }
 
-    const newStudent: Student = {
-      id: `stu-${Date.now()}`,
-      name: newName.trim(),
-      email: newEmail.trim(),
-      course: newCourse,
-      courseId: 'crs-1',
-      avatar: `https://images.unsplash.com/photo-${1534528741775 + (students.length % 10)}?w=150&auto=format&fit=crop&q=80`,
-      enrolledDate: new Date().toISOString().split('T')[0],
-      completionRate: 0,
-      riskScore: newRisk === 'CRITICAL' ? 92 : newRisk === 'HIGH' ? 78 : newRisk === 'MEDIUM' ? 58 : 18,
-      riskLevel: newRisk,
-      riskExplanation: 'Newly enrolled student undergoing initial learning baseline.',
-      riskFactors: [],
-      lastActive: 'Just now',
-      lastActiveDate: new Date().toISOString().split('T')[0],
-      status: 'Active',
-      coachAssigned: 'Alex Morgan',
-      timeline: [],
-    };
-
-    setStudents([newStudent, ...students]);
-    setIsEnrollModalOpen(false);
-    setNewName('');
-    setNewEmail('');
-    setFormError('');
-    success('Student enrolled successfully', `${newName} has been added to the academy directory.`);
+    try {
+      setSubmitting(true);
+      const created = await StudentsService.createStudent({
+        name: newName.trim(),
+        email: newEmail.trim(),
+      });
+      setStudents([created, ...students]);
+      setIsEnrollModalOpen(false);
+      setNewName('');
+      setNewEmail('');
+      setFormError('');
+      success('Student enrolled successfully', `${created.name} has been persisted to the database.`);
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to create student via API');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleResetFilters = () => {
@@ -169,7 +179,40 @@ export default function StudentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
-                {filteredStudents.map((student) => (
+                {loading && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                        <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                        <span>Loading students from live API...</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!loading && loadError && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-rose-500">
+                        <AlertTriangle className="w-6 h-6" />
+                        <span className="font-semibold">{loadError}</span>
+                        <button
+                          onClick={loadData}
+                          className="mt-2 px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 rounded-lg text-xs"
+                        >
+                          Retry Connection
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!loading && !loadError && filteredStudents.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center" style={{ color: 'var(--text-muted)' }}>
+                      No students found matching your criteria.
+                    </td>
+                  </tr>
+                )}
+                {!loading && !loadError && filteredStudents.map((student) => (
                   <tr key={student.id} className="transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">

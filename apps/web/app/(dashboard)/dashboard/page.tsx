@@ -10,30 +10,42 @@ import { RecentActivity } from '../../../components/dashboard/RecentActivity';
 import { UpcomingTasks } from '../../../components/dashboard/UpcomingTasks';
 import { RiskService } from '../../../services/risk.service';
 import { StudentsService } from '../../../services/students.service';
+import { TasksService, mapBackendTaskToFrontend } from '../../../services/tasks.service';
 import { KPICardData, RetentionTrendPoint, RetentionHealthScore } from '../../../types/dashboard';
 import { Student } from '../../../types/student';
-import { MOCK_TASKS } from '../../../mock/tasks';
+import { CoachTask } from '../../../types/task';
 
 export default function DashboardPage() {
   const [kpiCards, setKpiCards] = useState<KPICardData[]>([]);
   const [trendData, setTrendData] = useState<RetentionTrendPoint[]>([]);
   const [healthScore, setHealthScore] = useState<RetentionHealthScore | null>(null);
   const [atRiskStudents, setAtRiskStudents] = useState<Student[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<CoachTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [kpis, trend, health, students] = await Promise.all([
+        const [kpis, trend, health, students, rawTasks] = await Promise.all([
           RiskService.getKPICards(),
           RiskService.getRetentionTrend(),
           RiskService.getHealthScore(),
           StudentsService.getAtRiskStudents(),
+          TasksService.getTasks().catch(() => []),
         ]);
+
+        const studentMap: Record<string, { name: string; email?: string }> = {};
+        students.forEach((s) => {
+          studentMap[s.id] = { name: s.name, email: s.email };
+        });
+
+        const mappedTasks = rawTasks.map((t) => mapBackendTaskToFrontend(t, studentMap));
+
         setKpiCards(kpis);
         setTrendData(trend);
         setHealthScore(health);
         setAtRiskStudents(students);
+        setUpcomingTasks(mappedTasks);
       } finally {
         setLoading(false);
       }
@@ -66,7 +78,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <span>Good morning,</span>
             <span className="relative inline-block text-amber-500 dark:text-amber-400">
-              Alex
+              Workspace Coach
               <svg className="absolute -bottom-1.5 left-0 w-full h-2 text-amber-500 dark:text-amber-400" viewBox="0 0 100 20" preserveAspectRatio="none">
                 <path d="M0 15 Q 50 0, 100 12" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
               </svg>
@@ -128,7 +140,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         <AtRiskStudents students={atRiskStudents} />
         <RecentActivity />
-        <UpcomingTasks tasks={MOCK_TASKS} />
+        <UpcomingTasks tasks={upcomingTasks} />
       </div>
     </div>
   );

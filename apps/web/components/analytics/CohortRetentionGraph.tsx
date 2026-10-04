@@ -64,67 +64,78 @@ export function CohortRetentionGraph({ cohorts }: CohortRetentionGraphProps) {
       </div>
 
       {/* Line Chart */}
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              domain={[70, 100]}
-              unit="%"
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
-              itemStyle={{ color: '#fff' }}
-              formatter={(value: any, name: any) => [`${value}% retained`, name]}
-            />
-            {cohorts.map((c, i) => (
-              <Line
-                key={c.cohort}
-                type="monotone"
-                dataKey={c.cohort}
-                stroke={colors[i % colors.length]}
-                strokeWidth={2.5}
-                dot={{ r: 3, fill: colors[i % colors.length] }}
-                activeDot={{ r: 6 }}
+      {cohorts.length === 0 ? (
+        <div className="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-xl border-slate-200">
+          <p className="text-sm font-semibold text-slate-800">No Cohort Retention Data</p>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Cohort decay curves will plot dynamically as student cohorts progress across multi-week cycles.
+          </p>
+        </div>
+      ) : (
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                domain={[0, 100]}
+                unit="%"
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+              <Tooltip
+                contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
+                itemStyle={{ color: '#fff' }}
+                formatter={(value: any, name: any) => [`${value}% retained`, name]}
+              />
+              {cohorts.map((c, i) => (
+                <Line
+                  key={c.cohort}
+                  type="monotone"
+                  dataKey={c.cohort}
+                  stroke={colors[i % colors.length]}
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: colors[i % colors.length] }}
+                  activeDot={{ r: 6 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Cohort Matrix Table Preview */}
-      <div className="mt-6 pt-4 border-t border-slate-100 overflow-x-auto">
-        <table className="w-full text-xs text-left">
-          <thead>
-            <tr className="text-slate-400 font-medium border-b border-slate-100">
-              <th className="pb-2">Cohort</th>
-              <th className="pb-2 text-right">Students</th>
-              <th className="pb-2 text-right">W0</th>
-              <th className="pb-2 text-right">W2</th>
-              <th className="pb-2 text-right">W4</th>
-              <th className="pb-2 text-right">W6</th>
-              <th className="pb-2 text-right">W8</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50 font-medium">
-            {cohorts.map((c) => (
-              <tr key={c.cohort} className="hover:bg-slate-50/60 transition-colors">
-                <td className="py-2 font-semibold text-slate-800">{c.cohort}</td>
-                <td className="py-2 text-right text-slate-500">{c.initialSize}</td>
-                <td className="py-2 text-right text-emerald-600 bg-emerald-50/30 font-semibold">{c.week0}%</td>
-                <td className="py-2 text-right text-emerald-600 bg-emerald-50/20">{c.week2}%</td>
-                <td className="py-2 text-right text-emerald-700 bg-emerald-50/10">{c.week4}%</td>
-                <td className="py-2 text-right text-indigo-600 bg-indigo-50/20">{c.week6}%</td>
-                <td className="py-2 text-right text-indigo-700 bg-indigo-50/30 font-bold">{c.week8}%</td>
+      {cohorts.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-slate-100 overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead>
+              <tr className="text-slate-400 font-medium border-b border-slate-100">
+                <th className="pb-2">Cohort</th>
+                <th className="pb-2 text-right">Students</th>
+                <th className="pb-2 text-right">W0</th>
+                <th className="pb-2 text-right">W2</th>
+                <th className="pb-2 text-right">W4</th>
+                <th className="pb-2 text-right">W6</th>
+                <th className="pb-2 text-right">W8</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-50 font-medium">
+              {cohorts.map((c) => (
+                <tr key={c.cohort} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="py-2 font-semibold text-slate-800">{c.cohort}</td>
+                  <td className="py-2 text-right text-slate-500">{c.initialSize}</td>
+                  <td className="py-2 text-right text-emerald-600 bg-emerald-50/30 font-semibold">{c.week0}%</td>
+                  <td className="py-2 text-right text-emerald-600 bg-emerald-50/20">{c.week2}%</td>
+                  <td className="py-2 text-right text-emerald-700 bg-emerald-50/10">{c.week4}%</td>
+                  <td className="py-2 text-right text-indigo-600 bg-indigo-50/20">{c.week6}%</td>
+                  <td className="py-2 text-right text-indigo-700 bg-indigo-50/30 font-bold">{c.week8}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
