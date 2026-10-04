@@ -179,6 +179,7 @@ model Organization {
   students          Student[]
   enrollments       CourseEnrollment[]
   activityEvents    ActivityEvent[]
+  studentActivities StudentActivity[]
   riskScores        RiskScore[]
   campaigns         RetentionCampaign[]
   messageActions    MessageAction[]
@@ -278,6 +279,7 @@ model Student {
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   enrollments       CourseEnrollment[]
   activityEvents    ActivityEvent[]
+  studentActivities StudentActivity[]
   riskScores        RiskScore[]
   messageActions    MessageAction[]
   retentionOutcomes RetentionOutcome[]
@@ -319,6 +321,27 @@ model CourseEnrollment {
 // ============================================================================
 // ACTIVITY & RISK MODELS
 // ============================================================================
+
+model StudentActivity {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  studentId      String   @map("student_id")
+  activityType   String   @map("activity_type")
+  source         String?
+  payload        Json?
+  occurredAt     DateTime @map("occurred_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([organizationId, studentId, occurredAt])
+  @@map("student_activities")
+}
 
 model ActivityEvent {
   id             String            @id @default(uuid())
