@@ -1,1 +1,2 @@
-export const COMMON_FILTER_PLACEHOLDER = true;
+export * from './global-exception.filter';
+

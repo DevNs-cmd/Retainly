@@ -7,7 +7,7 @@ import { CreateActivityDto } from './dto/create-activity.dto';
 export class ActivitiesRepository {
   constructor(private readonly prisma: PrismaService) {}
   async list(organizationId: string, query: ListActivitiesDto) {
-    const where: Prisma.StudentActivityWhereInput = { organizationId, studentId: query.studentId, activityType: query.type };
+    const where: Prisma.StudentActivityWhereInput = { organizationId, studentId: query.studentId, activityType: query.activityType ?? query.type };
     const [data, total] = await this.prisma.$transaction([
       this.prisma.studentActivity.findMany({ where, skip: query.skip, take: query.limit, orderBy: [{ [query.sortBy]: query.sortOrder }, { id: 'asc' }] }),
       this.prisma.studentActivity.count({ where }),

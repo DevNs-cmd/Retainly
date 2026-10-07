@@ -72,4 +72,16 @@ test('auth bypass requires explicit Public metadata and roles deny viewers', asy
   const roles = new RolesGuard(reflector);
   assert.throws(() => roles.canActivate(context({ user: { organizationId: 'a', role: Role.VIEWER }, params: {} }, mutation)), ForbiddenException);
   assert.throws(() => roles.canActivate(context({ user: { organizationId: 'a', role: Role.OWNER }, params: { orgId: 'b' } }, mutation)), ForbiddenException);
+
+  const regularHandler = () => {};
+  assert.throws(() => roles.canActivate(context({ user: { organizationId: '', role: Role.VIEWER }, params: {} }, regularHandler)), ForbiddenException);
+
+  const invitationHandler = () => {};
+  Reflect.defineMetadata('auth:invitation', true, invitationHandler);
+  assert.equal(roles.canActivate(context({ user: { organizationId: '', role: Role.VIEWER }, params: {} }, invitationHandler)), true);
+
+  const onboardingHandler = () => {};
+  Reflect.defineMetadata('auth:onboarding', true, onboardingHandler);
+  assert.equal(roles.canActivate(context({ user: { organizationId: '', role: Role.VIEWER }, params: {} }, onboardingHandler)), true);
 });
+
