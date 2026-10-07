@@ -14,6 +14,20 @@ export function getAuthToken(): string | null {
     localStorage.setItem('retainly_token', DEFAULT_DEV_TOKEN);
     return DEFAULT_DEV_TOKEN;
   }
+  try {
+    const parts = stored.split('.');
+    if (parts.length === 3) {
+      const jsonStr = typeof atob !== 'undefined' ? atob(parts[1]) : Buffer.from(parts[1], 'base64').toString('utf-8');
+      const payload = JSON.parse(jsonStr);
+      if (payload.exp && payload.exp * 1000 <= Date.now()) {
+        localStorage.setItem('retainly_token', DEFAULT_DEV_TOKEN);
+        return DEFAULT_DEV_TOKEN;
+      }
+    }
+  } catch {
+    localStorage.setItem('retainly_token', DEFAULT_DEV_TOKEN);
+    return DEFAULT_DEV_TOKEN;
+  }
   return stored;
 }
 

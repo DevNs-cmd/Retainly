@@ -16,8 +16,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const STORAGE_KEY = 'retainly_theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -27,10 +27,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (saved && (saved === 'light' || saved === 'dark' || saved === 'system')) {
         setThemeState(saved);
       } else {
-        setThemeState('dark');
+        setThemeState('light');
       }
     } catch {
-      setThemeState('dark');
+      setThemeState('light');
     }
     setMounted(true);
   }, []);
